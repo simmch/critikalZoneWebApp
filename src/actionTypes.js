@@ -1,0 +1,1 @@
+export const GET_ART = 'GET_ART';
