@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import FileUploader from 'react-firebase-file-uploader';
-import { saveArticle } from '../../../actions/articleAction';
+import { saveArticle, uploadImage } from '../../../actions/articleAction';
 
 import { connect } from 'react-redux';
 
@@ -21,36 +21,86 @@ class ArticleCreator extends Component {
       isUploading: false,
       progress: 0,
       body: '',
-      img: {}
+      pictureUrl: '',
+      picture: '',
+      videoLink: ''
     };
-  
-    // bind functions
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleUpload = this.handleUpload.bind(this);
   }
 
   handleChange(e){
       this.setState({
           [e.target.name]: e.target.value
-      }, ()=> console.log(this.state));
+      });
+  }
+
+  
+  handleUpload(e){
+    this.setState({
+      picture: e.target.files[0]
+    });
+
+    console.log(this.state.picture)
+  }
+
+  uploadFile(){
+      this.props.uploadImage(this.state.picture).then((snapshot) => {
+        snapshot.ref.getDownloadURL().then(result => {
+            this.setState({
+              pictureUrl: result
+            })
+
+        })
+    })
+  }
+
+/////////////////////////////
+// Submit Data to Database //
+/////////////////////////////
+handleSubmit(e){
+    e.preventDefault();
+    console.log(this.state.picture)
+    
+    this.uploadFile()
+    
+    const article = {
+      header: this.state.header,
+      tagLine: this.state.tagLine,
+      articleType: this.state.articleType,
+      system: this.state.system,
+      body: this.state.body,
+      videoLink: this.state.videoLink
+  }
+
+  setTimeout(()=> { 
+    console.log('The picture URL is still: ' + this.state.pictureUrl); 
+    const article2 = Object.assign({body: this.state.body, pictureUrl: this.state.pictureUrl}, article)
+    console.log(article2)
+    this.props.saveArticle(article2);
+  }, 2000)
+  
+  console.log('Data saved!')  
+  /////////////////////////////////// 
+  // Resets the state back to nothing
+  ///////////////////////////////////
+    this.setState({
+      header: '',
+      tagLine: '',
+      articleType: '',
+      system: '',
+      body: '',
+      pictureUrl: ''
+    })
   }
 
 
-  handleSubmit(e){
-      e.preventDefault();
-      // Takes the current property state and pushes it to database
-      const article = {
-          header: this.state.header,
-          tagLine: this.state.tagLine,
-          articleType: this.state.articleType,
-          system: this.state.system,
-          body: this.state.body
-      }
-    this.props.saveArticle(article);
-  }
-
-
+//////////////////////////////
+// Form for Data Population //
+//////////////////////////////
+// TODO
     render(){
         return(
             <div className="container-fluid"> 
@@ -62,13 +112,14 @@ class ArticleCreator extends Component {
                   {/* Header */}
                   <div className="form-group">
                   <label htmlFor="header">Header: </label>
-                  <input 
+                  <input
+                    maxLength="50" 
                     className="form-control"
                     type="text"
                     onChange={this.handleChange}
                     value={this.state.header}
                     name="header"
-                    placeholder="Article Header"
+                    placeholder="50 character limit"
                     required
                     />
                     </div>
@@ -76,12 +127,13 @@ class ArticleCreator extends Component {
                     <div className="form-group">
                     <label htmlFor="tagLine">Tag Line: </label>
                     <input  
+                      maxLength="140"
                       className="form-control"
                       onChange={this.handleChange}
                       type="text"
                       value={this.state.tagLine}
                       name="tagLine"
-                      placeholder="Tag Line for Article"
+                      placeholder="140 character limit"
                       required
                     />
                     </div>
@@ -100,41 +152,52 @@ class ArticleCreator extends Component {
                     <option value="PS4">PS4</option>
                     <option value="Xbox One">Xbox One</option>
                     <option value="Switch">Switch</option>
-                    <option value="PC">PC</option>
+                    <option value="All">All</option>
                     </select>
                     </div>
                     {/* Body */}
                     <div className="form-group">
                     <label htmlFor="body">Body: </label>
-                    <textarea className="form-control" 
+                    <textarea className="form-control"
+                    maxLength="2500" 
                     required
                     name="body"
                     onChange={this.handleChange}
                     value={this.state.body}
+                    placeholder="2500 character limit"
+                    />                
+                    </div>
+                    {/* Video Link */}
+                    <div className="form-group">
+                    <label htmlFor="videoLink">Video Link: </label>
+                    <input  
+                      className="form-control"
+                      onChange={this.handleChange}
+                      type="text"
+                      value={this.state.videoLink}
+                      name="videoLink"
+                      placeholder="Video link"
+                      required
                     />
-                    {/* img */}
-                    <br />
+                    </div>
+
+                    {/* img file upload */}  
                     <div className="input-group mb-3 form-group">
                       <div className="custom-file">
-                        <label class="custom-file-label upload-group" for="img">Choose file</label>
-                        <input type="file" className="custom-file-input" id="img"/>
+                        <label className="custom-file-label upload-group" htmlFor="img" placeholder="Select file">{this.state.picture.name}
+                        <input type="file" accept="image/*" className="custom-file-input" onChange={this.handleUpload} id="img"/>
+                        </label>
                       </div>
-                      {/* <div className="input-group-append">
-                        <button className="input-group-text" id="">Upload</button>
-                      </div> */}
                     </div>
 
-
-                    </div>
-
+                    {/* Submit article */}
                     <div className="form-group">
                         <button className="btn btn-primary">Save Article</button>
                     </div>
-      
-                </form>
+                  </form>
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
         );
     }
@@ -142,7 +205,9 @@ class ArticleCreator extends Component {
 }
 
 function mapStateToProps(state, ownProps){
-  return {};
+  return {
+    articles: state.articles
+  };
 }
 
-export default connect(mapStateToProps, {saveArticle})(ArticleCreator);
+export default connect(mapStateToProps, {saveArticle, uploadImage})(ArticleCreator);

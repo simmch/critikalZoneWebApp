@@ -12,3 +12,6 @@ var config = {
   firebase.initializeApp(config);
 
   export const database = firebase.database().ref('/articleData');
+  export const storage = firebase.storage().ref();
+
+
