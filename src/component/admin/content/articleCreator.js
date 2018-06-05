@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import FileUploader from 'react-firebase-file-uploader';
-import { saveArticle, uploadImage } from '../../../actions/articleAction';
+import _ from 'lodash';
+import { saveArticle, uploadImage, getArticles } from '../../../actions/articleAction';
+
 
 import { connect } from 'react-redux';
 
@@ -31,6 +32,10 @@ class ArticleCreator extends Component {
     this.handleUpload = this.handleUpload.bind(this);
   }
 
+  componentDidMount(){
+    this.props.getArticles();
+  }
+
   handleChange(e){
       this.setState({
           [e.target.name]: e.target.value
@@ -57,9 +62,9 @@ class ArticleCreator extends Component {
     })
   }
 
-/////////////////////////////
-// Submit Data to Database //
-/////////////////////////////
+///////////////////////////////////
+// POST: Submit Data to Database //
+///////////////////////////////////
 handleSubmit(e){
     e.preventDefault();
     console.log(this.state.picture)
@@ -92,9 +97,11 @@ handleSubmit(e){
       articleType: '',
       system: '',
       body: '',
-      pictureUrl: ''
+      pictureUrl: '',
+      videoLink: ''
     })
   }
+
 
 
 //////////////////////////////
@@ -177,7 +184,6 @@ handleSubmit(e){
                       value={this.state.videoLink}
                       name="videoLink"
                       placeholder="Video link"
-                      required
                     />
                     </div>
 
@@ -195,12 +201,32 @@ handleSubmit(e){
                         <button className="btn btn-primary">Save Article</button>
                     </div>
                   </form>
+                  {this.renderArticle()}
                   </div>
                 </div>
               </div>
             </div>
         );
     }
+
+
+
+////////////////////////////////////
+// GET: Pull Data from Firebase   //
+////////////////////////////////////
+
+renderArticle(){
+  return _.map(this.props.articles, (article, key) => {
+    return(
+      <div  key={key} className="jumbotron">
+          <span className="float-right">{article.system}</span>
+        <h3>{article.header}</h3>
+        <img src={article.pictureUrl} className="img-thumbnail mx-auto d-block" />
+        <p>{article.tagLine}</p>
+      </div>
+    );
+  })
+}
 
 }
 
@@ -210,4 +236,4 @@ function mapStateToProps(state, ownProps){
   };
 }
 
-export default connect(mapStateToProps, {saveArticle, uploadImage})(ArticleCreator);
+export default connect(mapStateToProps, {saveArticle, uploadImage, getArticles})(ArticleCreator);

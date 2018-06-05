@@ -1,1 +1,1 @@
-export const GET_ART = 'GET_ART';
+export const GET_ART = 'GET_ART'; // Get Articles

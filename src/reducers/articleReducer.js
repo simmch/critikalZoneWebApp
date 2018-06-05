@@ -1,9 +1,9 @@
 import {GET_ART} from '../actionTypes';
 
-export default function (state = {}, {type, payload}){
-    switch(type){
+export default function (state = {}, action){
+    switch(action.type){
         case GET_ART:
-            return payload;
+            return action.payload;
         default:
             return state;
     }
